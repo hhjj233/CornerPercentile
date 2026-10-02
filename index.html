@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Percentile control for highway scenario generation: requests set how extreme a scenario is relative to the natural futures of its own traffic context.">
+<meta property="og:title" content="How corner is a corner case? Percentile control for highway scenario generation">
+<meta property="og:description" content="Percentile control for highway scenario generation: requests set how extreme a scenario is relative to the natural futures of its own traffic context.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://hhjj233.github.io/CornerPercentile/">
+<meta property="og:image" content="https://hhjj233.github.io/CornerPercentile/static/videos/hero_poster.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f2328'/%3E%3Crect x='5' y='19' width='22' height='3' rx='1.5' fill='%23ffffff' fill-opacity='.45'/%3E%3Crect x='5' y='19' width='16' height='3' rx='1.5' fill='%23C8501A'/%3E%3Ccircle cx='21' cy='20.5' r='4.5' fill='%23ffffff' stroke='%23C8501A' stroke-width='2.5'/%3E%3C/svg%3E">
+<meta name="twitter:card" content="summary_large_image">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>How corner is a corner case?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #ffffff;
+    --text: #1d2126;
+    --muted: #5b6470;
+    --rule: #e3e6ea;
+    --surface: #f4f5f7;
+    --accent: #b45309;
+    --mark: #d97706;
+    --track: #eceef1;
+    --pill-bg: #1d2126;
+    --pill-text: #ffffff;
+    --pill-off-bg: #eceef1;
+    --pill-off-text: #5b6470;
+    --card: #ffffff;
+    --focus: #2563eb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #0f1215;
+      --text: #e7eaee;
+      --muted: #9aa4af;
+      --rule: #2a3038;
+      --surface: #171b20;
+      --accent: #f59e0b;
+      --mark: #f59e0b;
+      --track: #232931;
+      --pill-bg: #e7eaee;
+      --pill-text: #0f1215;
+      --pill-off-bg: #232931;
+      --pill-off-text: #9aa4af;
+      --card: #ffffff;
+      --focus: #60a5fa;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0f1215;
+    --text: #e7eaee;
+    --muted: #9aa4af;
+    --rule: #2a3038;
+    --surface: #171b20;
+    --accent: #f59e0b;
+    --mark: #f59e0b;
+    --track: #232931;
+    --pill-bg: #e7eaee;
+    --pill-text: #0f1215;
+    --pill-off-bg: #232931;
+    --pill-off-text: #9aa4af;
+    --card: #ffffff;
+    --focus: #60a5fa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    padding-inline: 20px;
+  }
+  .wrap { max-width: 920px; margin-inline: auto; }
+  .wide { max-width: 1240px; margin-inline: auto; }
+  header.hero { text-align: center; padding-block: 56px 28px; }
+  h1 {
+    font-size: clamp(1.7rem, 3.8vw, 2.6rem);
+    line-height: 1.22;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0 auto 22px;
+    max-width: 22em;
+  }
+  .authors { font-size: 1.1rem; margin: 0; }
+  .authors span { white-space: nowrap; }
+  .authors sup { color: var(--muted); font-size: 0.7em; }
+  .affil { color: var(--muted); margin: 6px 0 0; font-size: 1rem; }
+  .contact { color: var(--muted); margin: 2px 0 0; font-size: 0.95rem; }
+  .links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 22px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 18px; border-radius: 999px;
+    background: var(--pill-bg); color: var(--pill-text);
+    font-weight: 600; font-size: 0.95rem; text-decoration: none;
+    border: 0; cursor: pointer; font-family: inherit;
+  }
+  .pill:hover { opacity: 0.88; }
+  .pill.off { background: var(--pill-off-bg); color: var(--pill-off-text); cursor: default; }
+  .pill.off:hover { opacity: 1; }
+  .pill svg { width: 16px; height: 16px; fill: currentColor; }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  main a, footer a { color: var(--accent); text-underline-offset: 2px; }
+  figure { margin: 0; }
+  video { display: block; width: 100%; height: auto; border-radius: 8px; background: #000; }
+  .teaser figcaption, .figcap { color: var(--muted); font-size: 0.95rem; line-height: 1.6; margin: 12px auto 0; max-width: 920px; }
+  section { padding-block: 44px 8px; }
+  h2 {
+    font-size: 1.65rem; font-weight: 700; text-align: center;
+    margin: 0 0 20px; text-wrap: balance;
+  }
+  h3 { font-size: 1.15rem; margin: 0; }
+  p { margin: 0 0 14px; }
+  .abstract p { text-align: justify; hyphens: auto; }
+  .board { background: var(--card); border-radius: 10px; padding: 18px; border: 1px solid var(--rule); }
+  .board img { display: block; width: 100%; height: auto; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .pair figure { display: flex; flex-direction: column; gap: 8px; }
+  .pair .sub { color: #3d434b; font-size: 0.9rem; line-height: 1.5; }
+  .framework { max-width: 600px; margin-inline: auto; }
+  ol.steps { margin: 22px 0 0; padding-left: 1.3em; display: grid; gap: 10px; }
+  ol.steps li::marker { color: var(--accent); font-weight: 700; }
+  ol.steps + p { margin-top: 18px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 26px; }
+  .stat { border-top: 3px solid var(--mark); padding-top: 12px; }
+  .stat b { display: block; font-size: 1.9rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--muted); font-size: 0.95rem; line-height: 1.5; display: block; margin-top: 4px; }
+  .figure-stack { display: grid; gap: 28px; }
+  .cases { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 6px 0 22px; }
+  .cases button {
+    font-family: inherit; font-size: 0.92rem; font-weight: 600;
+    padding: 7px 14px; border-radius: 999px; cursor: pointer;
+    background: var(--surface); color: var(--text); border: 1px solid var(--rule);
+  }
+  .cases button[aria-pressed="true"] { background: var(--pill-bg); color: var(--pill-text); border-color: var(--pill-bg); }
+  .case-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 24px; align-items: start; margin-bottom: 16px; }
+  .case-head .meta { color: var(--muted); font-size: 0.92rem; margin: 2px 0 8px; }
+  .case-head p { margin: 0; }
+  .pet { display: grid; gap: 6px; font-size: 0.88rem; }
+  .pet .cap { color: var(--muted); font-size: 0.85rem; }
+  .pet .row { display: grid; grid-template-columns: 54px 1fr 54px; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
+  .pet .bar { height: 10px; background: var(--track); border-radius: 3px; overflow: hidden; }
+  .pet .bar i { display: block; height: 100%; background: var(--mark); border-radius: 3px; }
+  .pet .row span:last-child { text-align: right; }
+  .views { display: grid; gap: 14px; }
+  .views .label { color: var(--muted); font-size: 0.85rem; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px; }
+  .topdown { max-width: 1000px; margin-inline: auto; width: 100%; }
+  .bib { position: relative; }
+  .bib pre {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 8px;
+    padding: 18px; margin: 0; overflow-x: auto;
+    font-family: "Noto Sans Mono", ui-monospace, Menlo, Consolas, monospace; font-size: 0.85rem; line-height: 1.55;
+  }
+  .bib .pill { position: absolute; top: 10px; right: 10px; padding: 5px 12px; font-size: 0.82rem; }
+  footer { color: var(--muted); font-size: 0.88rem; text-align: center; padding-block: 40px 48px; border-top: 1px solid var(--rule); margin-top: 48px; }
+  footer p { margin: 0 0 8px; }
+  @media (max-width: 720px) {
+    body { font-size: 16px; }
+    .pair, .stats, .case-head { grid-template-columns: 1fr; }
+    header.hero { padding-block: 36px 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<header class="hero wrap">
+  <h1>How corner is a corner case? Percentile control for highway scenario generation</h1>
+  <p class="authors">
+    <span>Jiaxi Liu</span>, <span>Hang Zhou</span>, <span>Hangyu Li</span>, <span>Yifan Wang</span>, <span>Keke Long</span>,
+    <span>Chengyuan Ma</span>, <span>Bin Ran</span>, <span>Xiaopeng Li<sup>*</sup></span>
+  </p>
+  <p class="affil">Department of Civil and Environmental Engineering, University of Wisconsin–Madison</p>
+  <p class="contact"><sup>*</sup>Corresponding author: xli2485@wisc.edu</p>
+  <nav class="links" aria-label="Paper links">
+    <a class="pill" href="https://github.com/hhjj233/P-control-SG" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6zM14 3v5h5"/></svg>arXiv</a>
+    <a class="pill" href="https://github.com/hhjj233/P-control-SG" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 16.6 4 12l4.6-4.6L10 8.8 6.8 12l3.2 3.2zm6.8 0L14 15.2l3.2-3.2L14 8.8l1.4-1.4L20 12z"/></svg>Code</a>
+    <a class="pill" href="https://levelxdata.com/highd-dataset/" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C7.6 2 4 3.6 4 5.5v13C4 20.4 7.6 22 12 22s8-1.6 8-3.5v-13C20 3.6 16.4 2 12 2zm0 2c3.6 0 6 1.1 6 1.5S15.6 7 12 7 6 5.9 6 5.5 8.4 4 12 4zM6 8.3C7.5 8.8 9.6 9 12 9s4.5-.2 6-.7V12c0 .4-2.4 1.5-6 1.5S6 12.4 6 12zm0 6.5c1.5.5 3.6.7 6 .7s4.5-.2 6-.7v3.7c0 .4-2.4 1.5-6 1.5s-6-1.1-6-1.5z"/></svg>Data</a>
+    <a class="pill" href="#planner-test">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h12v14H4zM17 9l4-2.5v11L17 15z"/></svg>Videos</a>
+    <a class="pill" href="#bibtex">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18l-7-4-7 4z"/></svg>BibTeX</a>
+  </nav>
+</header>
+
+<figure class="teaser wide">
+  <video id="teaser" src="static/videos/hero.mp4" poster="static/videos/hero_poster.jpg" muted loop playsinline autoplay controls preload="auto"></video>
+  <figcaption>
+    Same history, three requests, filmed from above. An IDM+MOBIL planner (orange) drives through futures that our method generates at the 10th, 50th and 90th percentiles of this history's own risk distribution, while the other vehicles replay those futures without reacting. Blue marks the vehicle that sets the planner's minimum post-encroachment time (PET). At p&nbsp;=&nbsp;0.1 no vehicle in view changes lanes, and the blue vehicle is a leader more than 80&nbsp;m ahead, outside the view (arrow). At p&nbsp;=&nbsp;0.5 the vehicle in the next lane falls back and is just reaching the lane line, 29&nbsp;m behind the planner, when the window ends. At p&nbsp;=&nbsp;0.9 it moves into the planner's lane 14&nbsp;m behind it. The minimum PET falls from 2.74&nbsp;s to 0.77&nbsp;s and 0.30&nbsp;s.
+  </figcaption>
+</figure>
+
+<main>
+  <section class="wrap abstract" id="abstract">
+    <h2>Abstract</h2>
+    <p>Generating corner-case scenarios with appropriate adversity in a simulation environment is critical for testing an autonomous vehicle (AV) software stack’s safety performance before deployment. Existing autonomous-driving scenario generators can enforce specific behavior, adversity, or feasibility conditions, but they provide limited control over how extreme a generated scenario is relative to plausible futures in the same traffic context. This study represents the adversity of a generated scenario as its percentile in the conditional distribution of future risk given the observed history. This view supports calibrated answers to two questions: how “corner” a generated corner-case scenario is and how its “cornerness” can be fine-tuned.</p>
+    <p>To this end, we formulate history-conditioned risk-percentile requests and learn a reference risk distribution that maps each requested percentile to a physical risk target. We then use a percentile-conditioned joint diffusion model with sampling-time risk guidance to generate multi-agent futures, together with a reference-based criterion for evaluating percentile realization.</p>
+    <p>Experiments use the minimum post-encroachment time (PET) between the ego and its surrounding vehicles as the risk surrogate on highD. On the primary evaluation set, our method realizes 1,422 of 1,440 requests within a 0.05 percentile tolerance (98.75%), with mean percentile error 0.00673 and PET-target error 0.00991 seconds. The resulting interface connects context-relative risk specification, physical realization, and evaluation through a common risk scale.</p>
+  </section>
+
+  <section class="wrap" id="motivation">
+    <h2>Why adversity percentiles?</h2>
+    <p>The same one-second PET can be routine in one traffic context and rare in another. A physical threshold alone therefore says little about how extreme a scenario is for its situation. We index a corner case by its percentile among the natural futures of the observed history, so a request such as p&nbsp;=&nbsp;0.9 means the same degree of adversity in sparse and in dense traffic.</p>
+    <div class="board pair">
+      <figure>
+        <img src="static/images/motivation_existing.png" alt="Existing scenario-generation interfaces take tokens, language prompts or constraints as control inputs." loading="lazy">
+        <figcaption class="sub">(a) Existing interfaces use tokens, language prompts, or constraints and leave adversity percentiles unquantified.</figcaption>
+      </figure>
+      <figure>
+        <img src="static/images/motivation_ours.png" alt="Our interface takes a target adversity percentile p as the control input." loading="lazy">
+        <figcaption class="sub">(b) Our view: corner cases are indexed by a target adversity percentile p.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="wrap" id="method">
+    <h2>Method</h2>
+    <div class="board framework">
+      <img src="static/images/framework.png" alt="Three-layer workflow of data preprocessing, training and testing with the reference risk distribution and the percentile-conditioned joint generator." loading="lazy">
+    </div>
+    <p class="figcap">Three-layer workflow: data preprocessing, training and testing. The percentile predictor denotes the reference risk distribution, trained by CRPS on observed scene-risk measurements. The request enters the joint generator directly and guides its sampling path, together with road and background-separation constraints.</p>
+    <ol class="steps">
+      <li><b>Reference.</b> A risk distribution learned from natural highD trajectories maps each requested percentile p to a physical PET target for the observed history.</li>
+      <li><b>Generation.</b> A percentile-conditioned joint diffusion model generates the futures of all vehicles, and sampling-time risk guidance moves the outcome toward the target while road and background-separation constraints keep the scene feasible.</li>
+      <li><b>Evaluation.</b> A reference-based criterion checks whether the generated future lands at p, including outcomes at probability masses such as the PET cap.</li>
+    </ol>
+    <p>The reference and the generator are one implementation of the request. Any calibrated conditional distribution can serve as the reference, and any generator that can be steered toward a physical target can realize the request.</p>
+  </section>
+
+  <section class="wrap" id="results">
+    <h2>Results</h2>
+    <div class="stats">
+      <div class="stat"><b>98.75%</b><span>of 1,440 requests realized within 0.05 of the requested percentile, with mean percentile error 0.00673</span></div>
+      <div class="stat"><b>13–17%</b><span>of the requests met by the compared generators, even with a percentile input</span></div>
+      <div class="stat"><b>98.61%</b><span>of time-to-collision requests in car following, met by the same generator without retraining</span></div>
+    </div>
+    <div class="figure-stack">
+      <figure>
+        <div class="board"><img src="static/images/calibration.png" alt="Heatmaps of requested against realized percentile for our method, P-CVAE, Standard P-diffusion, RADE and natural priors." loading="lazy"></div>
+        <figcaption class="figcap">Where the outputs land. Each column shows, for one requested percentile, the share of outputs whose realized percentile falls in each bin. The outputs of our method concentrate at the request, while those of P-CVAE, Standard P-diffusion, RADE and natural priors spread over the whole scale.</figcaption>
+      </figure>
+      <figure>
+        <div class="board"><img src="static/images/tolerance_selection.png" alt="Share of requests met as a function of the percentile tolerance, and when the closest of K samples of the same history is selected." loading="lazy"></div>
+        <figcaption class="figcap">Precision across tolerances and selection among samples. (a) Share of the 1,440 requests realized within a percentile tolerance. (b) Share realized within 0.05 when the sample whose percentile is closest to the request is chosen among K samples of the same history. Even among 15 samples, the CTG++ prior meets 34.4% of the requests and the STRIVE prior 24.6%.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="comparison">
+    <div class="wrap">
+      <h2>Comparison with external generators</h2>
+      <p>External scenario generators learn natural traffic but take no percentile input. On one car-following history, we even give two of them an advantage: from the 15 samples of CTG++ and STRIVE, we pick after generation the one whose PET comes closest to each target. TrafficGen gives one output per history. Our method still lands closer to every target, and across all 96 test histories the external priors meet only 13–16% of the requests within the 0.05 tolerance.</p>
+    </div>
+    <div class="wide">
+      <figure>
+        <div class="board"><img src="static/images/external_comparison.png" alt="Our method at three requested percentiles and the TrafficGen, CTG++ and STRIVE samples closest to each target on the same car-following history, with the PET of all samples." loading="lazy"></div>
+        <figcaption class="figcap">The same car-following history with 10 vehicles. (a) Our method at p&nbsp;=&nbsp;0.1, 0.5 and 0.9. (b) TrafficGen: the top-1 output, generated without a percentile input. (c) CTG++ unguided prior and (d) STRIVE traffic prior: for each target, the sample whose PET is closest to it among 15 samples, selected after generation. (e) PET of all samples, with dotted lines at the targets. Orange marks the ego, blue the vehicle that sets its minimum PET and gray the other vehicles.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="planner-test">
+    <div class="wrap">
+      <h2>Planner test</h2>
+      <p>A percentile request is useful for AV testing when it translates into graded difficulty for the system under test. We replace the ego of each generated scenario with an IDM+MOBIL planner, and the surrounding vehicles replay their generated futures without reacting. The videos are rendered in MetaDrive from the exact trajectories of the paper's planner test, in real time at 25 frames per second. Each case shows one history under three requests, and the first four are the histories of Figs. 11 and 12 of the paper. In both views the planner is orange, the vehicle that reaches the minimum PET with it is blue and the other vehicles are gray. In the top-down view, a red cross marks the point both of them pass.</p>
+      <div class="cases" role="group" aria-label="Choose a case">
+        <button type="button" data-case="case-1" aria-pressed="true">Follower closing in</button>
+        <button type="button" data-case="case-2" aria-pressed="false">Lane change behind</button>
+        <button type="button" data-case="case-3" aria-pressed="false">Cut-in ahead</button>
+        <button type="button" data-case="case-4" aria-pressed="false">Planner lane change</button>
+        <button type="button" data-case="case-5" aria-pressed="false">Lane change behind (overtaking)</button>
+        <button type="button" data-case="case-6" aria-pressed="false">Dense traffic, three lanes</button>
+        <button type="button" data-case="case-7" aria-pressed="false">Dense traffic, two lanes</button>
+      </div>
+    </div>
+
+    <article class="case wide" id="case-1">
+      <div class="case-head wrap">
+        <div>
+          <h3>Follower closing in behind the planner</h3>
+          <p class="meta">7 vehicles · 3 lanes · Fig. 11(a) of the paper</p>
+          <p>At p&nbsp;=&nbsp;0.9, a follower 50&nbsp;m behind in the planner's lane accelerates from 34.0 to 45.8&nbsp;m/s and closes in.</p>
+        </div>
+        <div class="pet" aria-label="Planner minimum PET by request">
+          <span class="cap">Planner minimum PET, bars from 0 to 3&nbsp;s</span>
+          <div class="row"><span>p = 0.1</span><span class="bar"><i style="width:45.7%"></i></span><span>1.37 s</span></div>
+          <div class="row"><span>p = 0.5</span><span class="bar"><i style="width:17.7%"></i></span><span>0.53 s</span></div>
+          <div class="row"><span>p = 0.9</span><span class="bar"><i style="width:6.7%"></i></span><span>0.20 s</span></div>
+        </div>
+      </div>
+      <div class="views">
+        <div><div class="label wrap">Chase view</div><video src="static/videos/case_032_z2_chase.mp4" poster="static/videos/case_032_z2_chase_poster.jpg" muted loop playsinline controls preload="none"></video></div>
+        <div class="topdown"><div class="label">Top-down view</div><video src="static/videos/case_032_z2_topdown.mp4" poster="static/videos/case_032_z2_topdown_poster.jpg" muted loop playsinline controls preload="none"></video></div>
+      </div>
+    </article>
+    <article class="case wide" id="case-2" hidden>
+      <div class="case-head wrap">
+        <div>
+          <h3>Lane change behind the planner</h3>
+          <p class="meta">7 vehicles · 3 lanes · Fig. 11(b) of the paper</p>
+          <p>At p&nbsp;=&nbsp;0.9, a vehicle in the adjacent lane accelerates from 27.0 to 33.4&nbsp;m/s and changes into the planner's lane just behind it.</p>
+        </div>
+        <div class="pet" aria-label="Planner minimum PET by request">
+          <span class="cap">Planner minimum PET, bars from 0 to 3&nbsp;s</span>
+          <div class="row"><span>p = 0.1</span><span class="bar"><i style="width:91.3%"></i></span><span>2.74 s</span></div>
+          <div class="row"><span>p = 0.5</span><span class="bar"><i style="width:25.7%"></i></span><span>0.77 s</span></div>
+          <div class="row"><span>p = 0.9</span><span class="bar"><i style="width:10.0%"></i></span><span>0.30 s</span></div>
+        </div>
+      </div>
+      <div class="views">
+        <div><div class="label wrap">Chase view</div><video src="static/videos/case_056_z2_chase.mp4" poster="static/videos/case_056_z2_chase_poster.jpg" muted loop playsinline controls preload="none"></video></div>
+        <div class="topdown"><div class="label">Top-down view</div><video src="static/videos/case_056_z2_topdown.mp4" poster="static/videos/case_056_z2_topdown_poster.jpg" muted loop playsinline controls preload="none"></video></div>
+      </div>
+    </article>
+    <article class="case wide" id="case-3" hidden>
+      <div class="case-head wrap">
+        <div>
+          <h3>Cut-in ahead of the planner</h3>
+          <p class="meta">3 vehicles · 2 lanes · Fig. 12(c) of the paper</p>
+          <p>At p&nbsp;=&nbsp;0.9, a faster vehicle that starts 4.5&nbsp;m behind the planner in the adjacent lane overtakes it and changes into its lane ahead.</p>
+        </div>
+        <div class="pet" aria-label="Planner minimum PET by request">
+          <span class="cap">Planner minimum PET, bars from 0 to 3&nbsp;s</span>
+          <div class="row"><span>p = 0.1</span><span class="bar"><i style="width:84.0%"></i></span><span>2.52 s</span></div>
+          <div class="row"><span>p = 0.5</span><span class="bar"><i style="width:84.0%"></i></span><span>2.52 s</span></div>
+          <div class="row"><span>p = 0.9</span><span class="bar"><i style="width:27.7%"></i></span><span>0.83 s</span></div>
+        </div>
+      </div>
+      <div class="views">
+        <div><div class="label wrap">Chase view</div><video src="static/videos/case_021_z0_chase.mp4" poster="static/videos/case_021_z0_chase_poster.jpg" muted loop playsinline controls preload="none"></video></div>
+        <div class="topdown"><div class="label">Top-down view</div><video src="static/videos/case_021_z0_topdown.mp4" poster="static/videos/case_021_z0_topdown_poster.jpg" muted loop playsinline controls preload="none"></video></div>
+      </div>
+    </article>
+    <article class="case wide" id="case-4" hidden>
+      <div class="case-head wrap">
+        <div>
+          <h3>Lane change of the planner</h3>
+          <p class="meta">5 vehicles · 3 lanes · Fig. 12(d) of the paper</p>
+          <p>At p&nbsp;=&nbsp;0.5 and 0.9, the planner itself changes into the adjacent lane, about 30&nbsp;m behind a faster vehicle, which then sets its minimum PET. At p&nbsp;=&nbsp;0.9 the lane change comes 0.8&nbsp;s earlier.</p>
+        </div>
+        <div class="pet" aria-label="Planner minimum PET by request">
+          <span class="cap">Planner minimum PET, bars from 0 to 3&nbsp;s</span>
+          <div class="row"><span>p = 0.1</span><span class="bar"><i style="width:57.3%"></i></span><span>1.72 s</span></div>
+          <div class="row"><span>p = 0.5</span><span class="bar"><i style="width:29.7%"></i></span><span>0.89 s</span></div>
+          <div class="row"><span>p = 0.9</span><span class="bar"><i style="width:27.0%"></i></span><span>0.81 s</span></div>
+        </div>
+      </div>
+      <div class="views">
+        <div><div class="label wrap">Chase view</div><video src="static/videos/case_017_z2_chase.mp4" poster="static/videos/case_017_z2_chase_poster.jpg" muted loop playsinline controls preload="none"></video></div>
+        <div class="topdown"><div class="label">Top-down view</div><video src="static/videos/case_017_z2_topdown.mp4" poster="static/videos/case_017_z2_topdown_poster.jpg" muted loop playsinline controls preload="none"></video></div>
+      </div>
+    </article>
+    <article class="case wide" id="case-5" hidden>
+      <div class="case-head wrap">
+        <div>
+          <h3>Lane change behind the planner, overtaking</h3>
+          <p class="meta">3 vehicles · 2 lanes</p>
+          <p>At p&nbsp;=&nbsp;0.9, a vehicle 95&nbsp;m behind in the planner's lane closes in at up to 41.7&nbsp;m/s and starts to change into the adjacent lane as it reaches the planner.</p>
+        </div>
+        <div class="pet" aria-label="Planner minimum PET by request">
+          <span class="cap">Planner minimum PET, bars from 0 to 3&nbsp;s</span>
+          <div class="row"><span>p = 0.1</span><span class="bar"><i style="width:65.7%"></i></span><span>1.97 s</span></div>
+          <div class="row"><span>p = 0.5</span><span class="bar"><i style="width:41.3%"></i></span><span>1.24 s</span></div>
+          <div class="row"><span>p = 0.9</span><span class="bar"><i style="width:20.7%"></i></span><span>0.62 s</span></div>
+        </div>
+      </div>
+      <div class="views">
+        <div><div class="label wrap">Chase view</div><video src="static/videos/case_031_z2_chase.mp4" poster="static/videos/case_031_z2_chase_poster.jpg" muted loop playsinline controls preload="none"></video></div>
+        <div class="topdown"><div class="label">Top-down view</div><video src="static/videos/case_031_z2_topdown.mp4" poster="static/videos/case_031_z2_topdown_poster.jpg" muted loop playsinline controls preload="none"></video></div>
+      </div>
+    </article>
+    <article class="case wide" id="case-6" hidden>
+      <div class="case-head wrap">
+        <div>
+          <h3>Dense traffic, three lanes</h3>
+          <p class="meta">11 vehicles · 3 lanes</p>
+          <p>At p&nbsp;=&nbsp;0.9, a follower 46&nbsp;m behind in the planner's lane speeds up from 23.6 to 29.9&nbsp;m/s and closes in.</p>
+        </div>
+        <div class="pet" aria-label="Planner minimum PET by request">
+          <span class="cap">Planner minimum PET, bars from 0 to 3&nbsp;s</span>
+          <div class="row"><span>p = 0.1</span><span class="bar"><i style="width:59.3%"></i></span><span>1.78 s</span></div>
+          <div class="row"><span>p = 0.5</span><span class="bar"><i style="width:43.0%"></i></span><span>1.29 s</span></div>
+          <div class="row"><span>p = 0.9</span><span class="bar"><i style="width:25.7%"></i></span><span>0.77 s</span></div>
+        </div>
+      </div>
+      <div class="views">
+        <div><div class="label wrap">Chase view</div><video src="static/videos/case_077_z0_chase.mp4" poster="static/videos/case_077_z0_chase_poster.jpg" muted loop playsinline controls preload="none"></video></div>
+        <div class="topdown"><div class="label">Top-down view</div><video src="static/videos/case_077_z0_topdown.mp4" poster="static/videos/case_077_z0_topdown_poster.jpg" muted loop playsinline controls preload="none"></video></div>
+      </div>
+    </article>
+    <article class="case wide" id="case-7" hidden>
+      <div class="case-head wrap">
+        <div>
+          <h3>Dense traffic, two lanes</h3>
+          <p class="meta">12 vehicles · 2 lanes</p>
+          <p>At p&nbsp;=&nbsp;0.9, a follower 57&nbsp;m behind in the planner's lane speeds up from 21.9 to 23.7&nbsp;m/s and closes in on a dense two-lane carriageway.</p>
+        </div>
+        <div class="pet" aria-label="Planner minimum PET by request">
+          <span class="cap">Planner minimum PET, bars from 0 to 3&nbsp;s</span>
+          <div class="row"><span>p = 0.1</span><span class="bar"><i style="width:59.7%"></i></span><span>1.79 s</span></div>
+          <div class="row"><span>p = 0.5</span><span class="bar"><i style="width:44.0%"></i></span><span>1.32 s</span></div>
+          <div class="row"><span>p = 0.9</span><span class="bar"><i style="width:27.0%"></i></span><span>0.81 s</span></div>
+        </div>
+      </div>
+      <div class="views">
+        <div><div class="label wrap">Chase view</div><video src="static/videos/case_068_z0_chase.mp4" poster="static/videos/case_068_z0_chase_poster.jpg" muted loop playsinline controls preload="none"></video></div>
+        <div class="topdown"><div class="label">Top-down view</div><video src="static/videos/case_068_z0_topdown.mp4" poster="static/videos/case_068_z0_topdown_poster.jpg" muted loop playsinline controls preload="none"></video></div>
+      </div>
+    </article>
+  </section>
+
+  <section class="wrap" id="bibtex">
+    <h2>BibTeX</h2>
+    <div class="bib">
+      <button class="pill" type="button" id="copy-bib">Copy</button>
+<pre id="bib-text">@article{liu2026corner,
+  title   = {How corner is a corner case? Percentile control for
+             highway scenario generation},
+  author  = {Liu, Jiaxi and Zhou, Hang and Li, Hangyu and Wang, Yifan and
+             Long, Keke and Ma, Chengyuan and Ran, Bin and Li, Xiaopeng},
+  journal = {Transportation Research Part C: Emerging Technologies},
+  note    = {Under review},
+  year    = {2026}
+}</pre>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p>This material is based upon work supported by the U.S. National Science Foundation (NSF) under the NSF-DST Cyber-Physical Systems program, Award No. <a href="https://cps-vo.org/node/98755" target="_blank" rel="noopener">2343167</a>.</p>
+  <p>Scenario videos are rendered with the <a href="https://github.com/metadriverse/metadrive" target="_blank" rel="noopener">MetaDrive</a> simulator from scenarios generated by our method on the <a href="https://levelxdata.com/highd-dataset/" target="_blank" rel="noopener">highD dataset</a>. Code and pretrained models: <a href="https://github.com/hhjj233/P-control-SG" target="_blank" rel="noopener">github.com/hhjj233/P-control-SG</a>.</p>
+</footer>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var teaser = document.getElementById('teaser');
+  if (reduce && teaser) { teaser.removeAttribute('autoplay'); teaser.pause(); }
+  var cases = Array.prototype.slice.call(document.querySelectorAll('article.case'));
+  var buttons = Array.prototype.slice.call(document.querySelectorAll('[data-case]'));
+  function show(id, write) {
+    cases.forEach(function (c) {
+      var on = c.id === id;
+      c.hidden = !on;
+      c.querySelectorAll('video').forEach(function (v) {
+        if (on) {
+          if (v.preload === 'none') { v.preload = 'auto'; v.load(); }
+          if (!reduce) { var r = v.play(); if (r && r.catch) r.catch(function () {}); }
+        } else {
+          v.pause();
+        }
+      });
+    });
+    buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.case === id)); });
+    if (write) { try { history.replaceState(null, '', '#' + id); } catch (e) {} }
+  }
+  buttons.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.case, true); }); });
+  var start = (location.hash || '').slice(1);
+  show(/^case-[1-7]$/.test(start) ? start : 'case-1', false);
+  if (/^case-[1-7]$/.test(start)) { document.getElementById('planner-test').scrollIntoView(); }
+
+  var copy = document.getElementById('copy-bib');
+  var bib = document.getElementById('bib-text');
+  copy.addEventListener('click', function () {
+    var text = bib.textContent;
+    function selectIt() {
+      var range = document.createRange(); range.selectNodeContents(bib);
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      copy.textContent = 'Selected, press Ctrl+C';
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function () { copy.textContent = 'Copied'; }, selectIt);
+    } catch (e) { selectIt(); }
+    setTimeout(function () { copy.textContent = 'Copy'; }, 2200);
+  });
+})();
+</script>
+</body>
+</html>
